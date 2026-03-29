@@ -54,14 +54,14 @@ export function Timeline({ history }: TimelineProps) {
             <div className="relative pb-8">
               {idx !== history.length - 1 && (
                 <span
-                  className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+                  className="absolute left-3 sm:left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
                   aria-hidden="true"
                 />
               )}
-              <div className="relative flex space-x-3">
-                <div>
+              <div className="relative flex space-x-2 sm:space-x-3">
+                <div className="flex-shrink-0">
                   <span
-                    className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
+                    className={`h-6 w-6 sm:h-8 sm:w-8 rounded-full flex items-center justify-center ring-4 sm:ring-8 ring-white ${
                       actionColors[item.action] || 'bg-gray-500'
                     }`}
                   >
@@ -70,26 +70,26 @@ export function Timeline({ history }: TimelineProps) {
                     </span>
                   </span>
                 </div>
-                <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                  <div>
-                    <p className="text-sm text-gray-900">
+                <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:justify-between sm:space-x-4 pt-0.5 sm:pt-1.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm text-gray-900">
                       {actionLabels[item.action] || item.action}
                       {item.userName && (
                         <span className="font-medium text-gray-900"> por {item.userName}</span>
                       )}
                     </p>
                     {item.comments && (
-                      <p className="mt-1 text-sm text-gray-600">{item.comments}</p>
+                      <p className="mt-1 text-xs sm:text-sm text-gray-600 break-words">{item.comments}</p>
                     )}
                     {item.newValue && (
-                      <div className="mt-1 text-xs text-gray-500">
+                      <div className="mt-1 text-xs text-gray-500 break-all">
                         {JSON.stringify(item.newValue)}
                       </div>
                     )}
                   </div>
-                  <div className="whitespace-nowrap text-right text-sm text-gray-500">
+                  <div className="whitespace-nowrap text-left sm:text-right text-xs sm:text-sm text-gray-500 mt-1 sm:mt-0">
                     <time dateTime={item.createdAt.toString()}>
-                      {format(new Date(item.createdAt), "d 'de' MMMM, HH:mm")}
+                      {format(new Date(item.createdAt), "d 'de' MMM, HH:mm")}
                     </time>
                   </div>
                 </div>

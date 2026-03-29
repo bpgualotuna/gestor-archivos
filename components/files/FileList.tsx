@@ -97,7 +97,7 @@ export function FileList({ caseId }: FileListProps) {
       {files.map((file) => (
         <div
           key={file.id}
-          className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
         >
           {/* Icono del archivo */}
           <div className="flex-shrink-0">
@@ -105,9 +105,9 @@ export function FileList({ caseId }: FileListProps) {
           </div>
 
           {/* Información del archivo */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-medium text-gray-900 truncate">
+          <div className="flex-1 min-w-0 w-full">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-sm font-medium text-gray-900 break-words">
                 {file.fileName}
               </h4>
               {file.version > 1 && (
@@ -118,18 +118,18 @@ export function FileList({ caseId }: FileListProps) {
             </div>
             
             {file.description && (
-              <p className="text-sm text-gray-600 mt-1 truncate">
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">
                 {file.description}
               </p>
             )}
             
-            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2 text-xs text-gray-500">
               <span>{formatFileSize(file.fileSize)}</span>
-              <span>•</span>
-              <span>{file.uploadedByName}</span>
-              <span>•</span>
-              <span>
-                {format(new Date(file.createdAt), "d 'de' MMMM, yyyy 'a las' HH:mm", { locale: es })}
+              <span className="hidden sm:inline">•</span>
+              <span className="truncate max-w-[150px] sm:max-w-none">{file.uploadedByName}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="text-xs">
+                {format(new Date(file.createdAt), "d 'de' MMM, yyyy", { locale: es })}
               </span>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function FileList({ caseId }: FileListProps) {
           {/* Botón de descarga */}
           <button
             onClick={() => handleDownload(file)}
-            className="flex-shrink-0 p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+            className="flex-shrink-0 self-end sm:self-center p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
             title="Descargar archivo"
           >
             <Download className="w-5 h-5" />

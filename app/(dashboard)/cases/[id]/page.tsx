@@ -69,25 +69,25 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <Link
           href="/cases"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver a casos
         </Link>
         
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-gray-900">{caseData.title}</h2>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 break-words">{caseData.title}</h2>
               <StatusBadge status={caseData.status} />
             </div>
-            <p className="text-gray-600">{caseData.caseNumber}</p>
+            <p className="text-sm sm:text-base text-gray-600">{caseData.caseNumber}</p>
             {caseData.description && (
-              <p className="text-gray-700 mt-2">{caseData.description}</p>
+              <p className="text-sm sm:text-base text-gray-700 mt-2">{caseData.description}</p>
             )}
           </div>
         </div>
@@ -109,11 +109,11 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       )}
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 overflow-x-auto">
+        <nav className="-mb-px flex space-x-4 sm:space-x-8 min-w-max px-1">
           <button
             onClick={() => setActiveTab('workflow')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'workflow'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -123,7 +123,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
           </button>
           <button
             onClick={() => setActiveTab('files')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'files'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -133,7 +133,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
               activeTab === 'history'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -145,7 +145,7 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
         {activeTab === 'workflow' && (
           <div>
             {workflowLoading ? (

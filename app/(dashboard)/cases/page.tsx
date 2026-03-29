@@ -26,17 +26,18 @@ export default function CasesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Mis Casos</h2>
           <p className="text-gray-600 mt-1">Gestiona todos tus casos</p>
         </div>
         <Link
           href="/cases/new"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
         >
           <Plus className="w-5 h-5" />
-          Nuevo Caso
+          <span className="hidden sm:inline">Nuevo Caso</span>
+          <span className="sm:hidden">Nuevo</span>
         </Link>
       </div>
 

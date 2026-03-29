@@ -79,14 +79,14 @@ export function ApprovalActions({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold mb-4">Acciones de Revisión</h3>
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+      <h3 className="text-base sm:text-lg font-semibold mb-4">Acciones de Revisión</h3>
       
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         {canApprove && (
           <button
             onClick={() => setShowApproveModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
           >
             <CheckCircle className="w-5 h-5" />
             Aprobar
@@ -96,7 +96,7 @@ export function ApprovalActions({
         {canReturn && (
           <button
             onClick={() => setShowReturnModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
           >
             <RotateCcw className="w-5 h-5" />
             Devolver
@@ -106,9 +106,9 @@ export function ApprovalActions({
 
       {/* Modal de Aprobación */}
       {showApproveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold mb-4">Aprobar Paso</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4">Aprobar Paso</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,13 +123,13 @@ export function ApprovalActions({
               />
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
               <button
                 onClick={() => {
                   setShowApproveModal(false);
                   setComments('');
                 }}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                className="w-full sm:w-auto px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors order-2 sm:order-1"
                 disabled={isApproving}
               >
                 Cancelar
@@ -137,7 +137,7 @@ export function ApprovalActions({
               <button
                 onClick={handleApprove}
                 disabled={isApproving}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 order-1 sm:order-2"
               >
                 {isApproving ? 'Aprobando...' : 'Confirmar Aprobación'}
               </button>
@@ -148,9 +148,9 @@ export function ApprovalActions({
 
       {/* Modal de Devolución */}
       {showReturnModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold mb-4">Devolver Caso</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4">Devolver Caso</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -190,14 +190,14 @@ export function ApprovalActions({
               )}
             </div>
 
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
               <button
                 onClick={() => {
                   setShowReturnModal(false);
                   setComments('');
                   setReturnReason('');
                 }}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                className="w-full sm:w-auto px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md transition-colors order-2 sm:order-1"
                 disabled={isReturning}
               >
                 Cancelar
@@ -205,7 +205,7 @@ export function ApprovalActions({
               <button
                 onClick={handleReturn}
                 disabled={isReturning || !returnReason.trim() || comments.length < 10}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2"
               >
                 {isReturning ? 'Devolviendo...' : 'Confirmar Devolución'}
               </button>
