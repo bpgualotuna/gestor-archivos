@@ -1,6 +1,6 @@
 import { query, transaction } from '@/lib/db';
 import { getBlobStorage } from '@/lib/azure/blob-storage';
-import { FileRecord, UploadFileDTO } from '@/types/file.types';
+import { FileRecord, UploadFileData } from '@/types/file.types';
 import { PoolClient } from 'pg';
 
 export class FileService {
@@ -39,7 +39,7 @@ export class FileService {
    * Sube un archivo
    */
   static async uploadFile(
-    data: UploadFileDTO,
+    data: UploadFileData,
     userId: string,
     fileBuffer: Buffer
   ): Promise<FileRecord> {

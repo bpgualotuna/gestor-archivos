@@ -28,17 +28,17 @@ export default function CaseDetailPage({ params }: { params: Promise<{ id: strin
   const { data: history, isLoading: historyLoading } = useCaseHistory(id);
 
   // Determinar si el usuario puede aprobar o devolver
-  const canApprove = user && caseData && (
+  const canApprove = !!(user && caseData && (
     user.role === 'ADMIN' || 
     (caseData.currentAreaRole && user.role === caseData.currentAreaRole)
-  );
+  ));
 
   const canReturn = canApprove;
 
   // Determinar si el usuario puede enviar el caso (es el creador y está en DRAFT o RETURNED)
-  const canSubmit = user && caseData && (
+  const canSubmit = !!(user && caseData && (
     user.role === 'ADMIN' || user.id === caseData.createdBy
-  ) && (caseData.status === 'DRAFT' || caseData.status === 'RETURNED');
+  ) && (caseData.status === 'DRAFT' || caseData.status === 'RETURNED'));
 
   const handleApprovalSuccess = () => {
     // Redirigir a la lista de casos después de aprobar

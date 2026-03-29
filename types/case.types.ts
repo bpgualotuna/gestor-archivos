@@ -1,3 +1,5 @@
+import { UserRole } from './user.types';
+
 export type CaseStatus = 
   | 'DRAFT'
   | 'SUBMITTED'
@@ -16,7 +18,7 @@ export interface Case {
   status: CaseStatus;
   createdBy: string;
   currentStepId?: string;
-  currentAreaRole?: string; // Área que debe revisar actualmente
+  currentAreaRole?: UserRole; // Área que debe revisar actualmente
   priority: number;
   dueDate?: Date;
   completedAt?: Date;

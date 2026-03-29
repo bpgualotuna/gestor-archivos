@@ -4,7 +4,7 @@ export const createCaseSchema = z.object({
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres').max(255),
   description: z.string().optional(),
   priority: z.number().int().min(0).max(10).optional().default(0),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
 });
 
 export const updateCaseSchema = z.object({
@@ -21,7 +21,7 @@ export const updateCaseSchema = z.object({
     'CANCELLED',
   ]).optional(),
   priority: z.number().int().min(0).max(10).optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
 });
 
 export const caseIdSchema = z.object({

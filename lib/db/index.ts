@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 // Configuración del pool de conexiones para Azure PostgreSQL
 const pool = new Pool({
@@ -40,7 +40,7 @@ pool.on('remove', () => {
 /**
  * Ejecuta una query con parámetros
  */
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> {

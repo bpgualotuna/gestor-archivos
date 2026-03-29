@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 // Opción 1: Usar DATABASE_URL si está disponible
 const connectionString = process.env.DATABASE_URL || 
@@ -20,7 +20,7 @@ pool.on('error', (err) => {
 /**
  * Ejecuta una query con parámetros
  */
-export async function query<T = any>(
+export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: any[]
 ): Promise<QueryResult<T>> {

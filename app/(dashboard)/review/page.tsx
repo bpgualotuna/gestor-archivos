@@ -82,7 +82,7 @@ export default function ReviewPage() {
       </div>
 
       {/* Casos devueltos */}
-      {cases?.filter((c) => c.status === 'RETURNED').length > 0 && (
+      {(cases?.filter((c) => c.status === 'RETURNED').length ?? 0) > 0 && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Casos Devueltos para Corrección

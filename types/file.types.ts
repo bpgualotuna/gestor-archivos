@@ -35,6 +35,15 @@ export interface UploadFileDTO {
   parentFileId?: string;
 }
 
+export interface UploadFileData {
+  caseId: string;
+  fileName: string;
+  fileType: FileType;
+  description?: string;
+  signatureReason?: string;
+  parentFileId?: string;
+}
+
 export interface FileVersion {
   version: number;
   fileName: string;
