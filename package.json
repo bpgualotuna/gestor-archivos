@@ -1,0 +1,43 @@
+{
+  "name": "gestor-archivos",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:test": "node database/test-connection.js",
+    "db:seed": "node database/seed-with-bcrypt.js",
+    "db:demo": "node database/seed-demo-data.js",
+    "db:migrate": "node database/run-migration.js",
+    "check": "node check-setup.js"
+  },
+  "dependencies": {
+    "next": "16.2.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "@tanstack/react-query": "^5.59.0",
+    "@azure/storage-blob": "^12.25.0",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1",
+    "bcryptjs": "^2.4.3",
+    "next-auth": "^4.24.10",
+    "date-fns": "^4.1.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/pg": "^8.11.10",
+    "@types/bcryptjs": "^2.4.6",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
