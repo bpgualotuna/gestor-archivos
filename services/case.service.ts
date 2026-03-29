@@ -36,12 +36,35 @@ export class CaseService {
    */
   static async createCase(data: CreateCaseDTO, userId: string): Promise<Case> {
     return transaction(async (client: PoolClient) => {
-      // Crear el caso
+      // Crear el caso con todos los campos
       const caseResult = await client.query<Case>(
-        `INSERT INTO cases (title, description, priority, due_date, created_by, status)
-         VALUES ($1, $2, $3, $4, $5, 'DRAFT')
+        `INSERT INTO cases (
+          title, description, priority, due_date, created_by, status,
+          advisor_name, document_file_name, odoo_code, client_provider,
+          document_type, sharepoint_url, request_date, required_delivery_date,
+          urgency_justification, signature_type, template_type, observations
+         )
+         VALUES ($1, $2, $3, $4, $5, 'DRAFT', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
          RETURNING *`,
-        [data.title, data.description, data.priority || 0, data.dueDate, userId]
+        [
+          data.title,
+          data.description,
+          data.priority || 0,
+          data.dueDate,
+          userId,
+          data.advisorName,
+          data.documentFileName,
+          data.odooCode,
+          data.clientProvider,
+          data.documentType,
+          data.sharepointUrl,
+          data.requestDate,
+          data.requiredDeliveryDate,
+          data.urgencyJustification,
+          data.signatureType,
+          data.templateType,
+          data.observations,
+        ]
       );
 
       const newCase = caseResult.rows[0];
@@ -107,6 +130,54 @@ export class CaseService {
     if (data.dueDate !== undefined) {
       fields.push(`due_date = $${paramCount++}`);
       values.push(data.dueDate);
+    }
+    if (data.advisorName !== undefined) {
+      fields.push(`advisor_name = $${paramCount++}`);
+      values.push(data.advisorName);
+    }
+    if (data.documentFileName !== undefined) {
+      fields.push(`document_file_name = $${paramCount++}`);
+      values.push(data.documentFileName);
+    }
+    if (data.odooCode !== undefined) {
+      fields.push(`odoo_code = $${paramCount++}`);
+      values.push(data.odooCode);
+    }
+    if (data.clientProvider !== undefined) {
+      fields.push(`client_provider = $${paramCount++}`);
+      values.push(data.clientProvider);
+    }
+    if (data.documentType !== undefined) {
+      fields.push(`document_type = $${paramCount++}`);
+      values.push(data.documentType);
+    }
+    if (data.sharepointUrl !== undefined) {
+      fields.push(`sharepoint_url = $${paramCount++}`);
+      values.push(data.sharepointUrl);
+    }
+    if (data.requestDate !== undefined) {
+      fields.push(`request_date = $${paramCount++}`);
+      values.push(data.requestDate);
+    }
+    if (data.requiredDeliveryDate !== undefined) {
+      fields.push(`required_delivery_date = $${paramCount++}`);
+      values.push(data.requiredDeliveryDate);
+    }
+    if (data.urgencyJustification !== undefined) {
+      fields.push(`urgency_justification = $${paramCount++}`);
+      values.push(data.urgencyJustification);
+    }
+    if (data.signatureType !== undefined) {
+      fields.push(`signature_type = $${paramCount++}`);
+      values.push(data.signatureType);
+    }
+    if (data.templateType !== undefined) {
+      fields.push(`template_type = $${paramCount++}`);
+      values.push(data.templateType);
+    }
+    if (data.observations !== undefined) {
+      fields.push(`observations = $${paramCount++}`);
+      values.push(data.observations);
     }
 
     if (fields.length === 0) return null;
@@ -189,6 +260,19 @@ export class CaseService {
       creatorEmail: row.creator_email,
       fileCount: parseInt(row.file_count) || 0,
       commentCount: parseInt(row.comment_count) || 0,
+      // Nuevos campos
+      advisorName: row.advisor_name,
+      documentFileName: row.document_file_name,
+      odooCode: row.odoo_code,
+      clientProvider: row.client_provider,
+      documentType: row.document_type,
+      sharepointUrl: row.sharepoint_url,
+      requestDate: row.request_date,
+      requiredDeliveryDate: row.required_delivery_date,
+      urgencyJustification: row.urgency_justification,
+      signatureType: row.signature_type,
+      templateType: row.template_type,
+      observations: row.observations,
     };
   }
 }

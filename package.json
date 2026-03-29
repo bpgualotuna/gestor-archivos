@@ -11,6 +11,7 @@
     "db:seed": "node database/seed-with-bcrypt.js",
     "db:demo": "node database/seed-demo-data.js",
     "db:migrate": "node database/run-migration.js",
+    "db:migrate-case-fields": "node database/run-case-fields-migration.js",
     "db:clear-cases": "node database/clear-cases.js",
     "check": "node check-setup.js"
   },
