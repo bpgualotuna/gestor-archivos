@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 import { requireRole } from '@/lib/auth/get-session';
+import { ValidationError } from '@/lib/utils/errors';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (existingUser.rows.length > 0) {
-      return errorResponse(new Error('El email ya está registrado'), 400);
+      return errorResponse(new ValidationError('El email ya está registrado'));
     }
 
     // Hash de la contraseña

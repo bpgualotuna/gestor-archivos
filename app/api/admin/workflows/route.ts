@@ -4,6 +4,7 @@ import { successResponse, errorResponse } from '@/lib/utils/response';
 import { requireRole } from '@/lib/auth/get-session';
 import { z } from 'zod';
 import { PoolClient } from 'pg';
+import { ValidationError } from '@/lib/utils/errors';
 
 const updateWorkflowSchema = z.object({
   name: z.string().min(3).optional(),
@@ -77,7 +78,7 @@ export async function PATCH(request: NextRequest) {
     const { workflowId, ...validatedData } = body;
     
     if (!workflowId) {
-      return errorResponse(new Error('workflowId es requerido'), 400);
+      return errorResponse(new ValidationError('workflowId es requerido'));
     }
 
     const result = await transaction(async (client: PoolClient) => {

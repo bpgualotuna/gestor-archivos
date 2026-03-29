@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { query } from '@/lib/db';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 import { requireRole } from '@/lib/auth/get-session';
+import { NotFoundError, ValidationError } from '@/lib/utils/errors';
 
 /**
  * PATCH /api/admin/workflows/:id/activate
@@ -29,7 +30,7 @@ export async function PATCH(
     );
 
     if (result.rows.length === 0) {
-      return errorResponse(new Error('Workflow no encontrado'), 404);
+      return errorResponse(new NotFoundError('Workflow no encontrado'));
     }
 
     return successResponse({
@@ -62,11 +63,11 @@ export async function DELETE(
     );
 
     if (checkResult.rows.length === 0) {
-      return errorResponse(new Error('Workflow no encontrado'), 404);
+      return errorResponse(new NotFoundError('Workflow no encontrado'));
     }
 
     if (checkResult.rows[0].is_active) {
-      return errorResponse(new Error('No se puede eliminar un workflow activo'), 400);
+      return errorResponse(new ValidationError('No se puede eliminar un workflow activo'));
     }
 
     // Eliminar pasos primero

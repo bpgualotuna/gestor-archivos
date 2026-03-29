@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 import { requireRole } from '@/lib/auth/get-session';
 import { z } from 'zod';
+import { ValidationError, NotFoundError } from '@/lib/utils/errors';
 
 const updateUserSchema = z.object({
   firstName: z.string().min(2).optional(),
@@ -48,7 +49,7 @@ export async function PATCH(
     }
 
     if (fields.length === 0) {
-      return errorResponse(new Error('No hay campos para actualizar'), 400);
+      return errorResponse(new ValidationError('No hay campos para actualizar'));
     }
 
     values.push(id);
@@ -61,7 +62,7 @@ export async function PATCH(
     );
 
     if (result.rows.length === 0) {
-      return errorResponse(new Error('Usuario no encontrado'), 404);
+      return errorResponse(new NotFoundError('Usuario no encontrado'));
     }
 
     const updatedUser = {
@@ -103,7 +104,7 @@ export async function DELETE(
     );
 
     if (result.rows.length === 0) {
-      return errorResponse(new Error('Usuario no encontrado'), 404);
+      return errorResponse(new NotFoundError('Usuario no encontrado'));
     }
 
     return successResponse({ message: 'Usuario desactivado exitosamente' });
