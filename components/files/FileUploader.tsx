@@ -75,7 +75,7 @@ export function FileUploader({ caseId, onSuccess }: FileUploaderProps) {
         <select
           value={fileType}
           onChange={(e) => setFileType(e.target.value as FileType)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
         >
           <option value="DOCUMENT">Documento</option>
           <option value="IMAGE">Imagen</option>
@@ -93,7 +93,7 @@ export function FileUploader({ caseId, onSuccess }: FileUploaderProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           placeholder="Describe el contenido del archivo..."
         />
       </div>
@@ -106,7 +106,7 @@ export function FileUploader({ caseId, onSuccess }: FileUploaderProps) {
           type="text"
           value={signatureReason}
           onChange={(e) => setSignatureReason(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           placeholder="¿Por qué necesita ser firmado?"
         />
       </div>

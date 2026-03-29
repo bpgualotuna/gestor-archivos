@@ -117,7 +117,7 @@ export function ApprovalActions({
               <textarea
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
                 rows={4}
                 placeholder="Agregar comentarios sobre la aprobación..."
               />
@@ -160,7 +160,7 @@ export function ApprovalActions({
                 type="text"
                 value={returnReason}
                 onChange={(e) => setReturnReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-gray-900"
                 placeholder="Ej: Documentos incompletos"
                 required
               />
@@ -178,7 +178,7 @@ export function ApprovalActions({
               <textarea
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-gray-900"
                 rows={4}
                 placeholder="Explica qué debe corregir el usuario..."
                 required

@@ -42,7 +42,7 @@ export function CreateCaseForm() {
           onChange={(e) => setTitle(e.target.value)}
           required
           minLength={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           placeholder="Ingresa un título descriptivo..."
         />
       </div>
@@ -56,7 +56,7 @@ export function CreateCaseForm() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
           placeholder="Describe el caso en detalle..."
         />
       </div>
@@ -72,7 +72,7 @@ export function CreateCaseForm() {
           onChange={(e) => setPriority(parseInt(e.target.value))}
           min={0}
           max={10}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
         />
       </div>
 
