@@ -9,8 +9,31 @@ export class FlowService {
    * Obtiene el progreso del workflow de un caso
    */
   static async getWorkflowProgress(caseId: string): Promise<WorkflowProgressView[]> {
+    // Solo mostrar pasos que tienen registros de progreso para este caso
+    // Esto evita mostrar pasos nuevos del workflow en casos que usaron versiones anteriores
     const result = await query<WorkflowProgressView>(
-      'SELECT * FROM workflow_progress_view WHERE case_id = $1 ORDER BY step_order',
+      `SELECT 
+        cw.case_id,
+        cw.workflow_template_id,
+        wt.name as workflow_name,
+        ws.step_order,
+        ws.step_name,
+        ws.required_role,
+        wsp.status as step_status,
+        wsp.assigned_to,
+        wsp.reviewed_by,
+        u1.first_name || ' ' || u1.last_name as assigned_to_name,
+        u2.first_name || ' ' || u2.last_name as reviewed_by_name,
+        wsp.comments,
+        wsp.completed_at
+      FROM case_workflows cw
+      JOIN workflow_templates wt ON cw.workflow_template_id = wt.id
+      JOIN workflow_step_progress wsp ON wsp.case_workflow_id = cw.id
+      JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
+      LEFT JOIN users u1 ON wsp.assigned_to = u1.id
+      LEFT JOIN users u2 ON wsp.reviewed_by = u2.id
+      WHERE cw.case_id = $1
+      ORDER BY ws.step_order`,
       [caseId]
     );
 

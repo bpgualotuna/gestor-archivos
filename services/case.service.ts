@@ -64,12 +64,13 @@ export class CaseService {
 
         const caseWorkflowId = caseWorkflowResult.rows[0].id;
 
-        // Crear progreso para cada paso
+        // Crear progreso para cada paso (solo pasos activos, no históricos)
         await client.query(
           `INSERT INTO workflow_step_progress (case_workflow_id, workflow_step_id, status)
            SELECT $1, id, 'PENDING'
            FROM workflow_steps
            WHERE workflow_template_id = $2
+           AND step_name NOT LIKE '%(histórico)%'
            ORDER BY step_order`,
           [caseWorkflowId, workflowId]
         );
