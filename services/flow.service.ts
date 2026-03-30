@@ -3,6 +3,7 @@ import { WorkflowProgressView } from '@/types/flow.types';
 import { UserRole, UserArea } from '@/types/user.types';
 import { ForbiddenError, ValidationError } from '@/lib/utils/errors';
 import { PoolClient } from 'pg';
+import { NotificationService } from './notification.service';
 
 export class FlowService {
   /**
@@ -50,7 +51,21 @@ export class FlowService {
     userArea: UserArea | undefined,
     comments?: string
   ): Promise<void> {
+    let caseInfo: any;
+    let nextArea: UserArea | null = null;
+    let isCompleted = false;
+
     await transaction(async (client: PoolClient) => {
+      // Obtener información del caso
+      const caseResult = await client.query(
+        `SELECT c.case_number, c.title, c.created_by, u.first_name || ' ' || u.last_name as creator_name
+         FROM cases c
+         JOIN users u ON c.created_by = u.id
+         WHERE c.id = $1`,
+        [caseId]
+      );
+      caseInfo = caseResult.rows[0];
+
       // Obtener el paso actual y verificar permisos
       const currentStepResult = await client.query(
         `SELECT wsp.id, ws.step_order, ws.required_area, cw.workflow_template_id, c.current_area
@@ -94,6 +109,8 @@ export class FlowService {
       );
 
       if (nextStepResult.rows.length > 0) {
+        nextArea = nextStepResult.rows[0].required_area;
+        
         // Activar siguiente paso
         await client.query(
           `UPDATE workflow_step_progress
@@ -107,10 +124,11 @@ export class FlowService {
           `UPDATE cases 
            SET status = 'IN_REVIEW', current_area = $1 
            WHERE id = $2`,
-          [nextStepResult.rows[0].required_area, caseId]
+          [nextArea, caseId]
         );
       } else {
         // No hay más pasos, marcar caso como aprobado
+        isCompleted = true;
         await client.query(
           `UPDATE cases 
            SET status = 'APPROVED', current_area = NULL, completed_at = CURRENT_TIMESTAMP 
@@ -131,6 +149,44 @@ export class FlowService {
         [caseId, userId, comments]
       );
     });
+
+    // Crear notificaciones después de la transacción
+    const areaLabels: Record<UserArea, string> = {
+      COMERCIAL: 'Comercial',
+      TECNICA: 'Técnica',
+      FINANCIERA: 'Financiera',
+      LEGAL: 'Legal',
+    };
+
+    if (isCompleted) {
+      // Notificar al creador que el caso está completado
+      await NotificationService.notifyCaseCompleted(
+        caseId,
+        caseInfo.case_number,
+        caseInfo.title,
+        caseInfo.created_by
+      );
+    } else if (nextArea) {
+      // Notificar al creador que el caso fue aprobado por un área
+      if (userArea) {
+        await NotificationService.notifyCaseApproved(
+          caseId,
+          caseInfo.case_number,
+          caseInfo.title,
+          caseInfo.created_by,
+          areaLabels[userArea]
+        );
+      }
+
+      // Notificar al área siguiente que tiene un nuevo caso
+      await NotificationService.notifyAreaNewCase(
+        caseId,
+        caseInfo.case_number,
+        caseInfo.title,
+        nextArea,
+        caseInfo.creator_name
+      );
+    }
   }
 
   /**
@@ -201,7 +257,19 @@ export class FlowService {
     comments: string,
     returnReason: string
   ): Promise<void> {
+    let caseInfo: any;
+    let currentArea: UserArea | null = null;
+
     await transaction(async (client: PoolClient) => {
+      // Obtener información del caso
+      const caseResult = await client.query(
+        `SELECT c.case_number, c.title, c.created_by
+         FROM cases c
+         WHERE c.id = $1`,
+        [caseId]
+      );
+      caseInfo = caseResult.rows[0];
+
       // Verificar permisos
       const stepResult = await client.query(
         `SELECT ws.required_area
@@ -216,9 +284,11 @@ export class FlowService {
         throw new ValidationError('No hay paso en progreso para devolver');
       }
 
-      if (userRole !== 'ADMIN' && (userRole !== 'AREA_USER' || userArea !== stepResult.rows[0].required_area)) {
+      currentArea = stepResult.rows[0].required_area;
+
+      if (userRole !== 'ADMIN' && (userRole !== 'AREA_USER' || userArea !== currentArea)) {
         throw new ForbiddenError(
-          `Solo usuarios del área ${stepResult.rows[0].required_area} pueden devolver este paso`
+          `Solo usuarios del área ${currentArea} pueden devolver este paso`
         );
       }
 
@@ -253,13 +323,45 @@ export class FlowService {
         [caseId, userId, returnReason]
       );
     });
+
+    // Crear notificación después de la transacción
+    const areaLabels: Record<UserArea, string> = {
+      COMERCIAL: 'Comercial',
+      TECNICA: 'Técnica',
+      FINANCIERA: 'Financiera',
+      LEGAL: 'Legal',
+    };
+
+    if (currentArea) {
+      await NotificationService.notifyCaseReturned(
+        caseId,
+        caseInfo.case_number,
+        caseInfo.title,
+        caseInfo.created_by,
+        areaLabels[currentArea],
+        returnReason
+      );
+    }
   }
 
   /**
    * Reenvía un caso devuelto
    */
   static async resubmitCase(caseId: string): Promise<void> {
+    let caseInfo: any;
+    let targetArea: UserArea | null = null;
+
     await transaction(async (client: PoolClient) => {
+      // Obtener información del caso
+      const caseResult = await client.query(
+        `SELECT c.case_number, c.title, c.created_by, u.first_name || ' ' || u.last_name as creator_name
+         FROM cases c
+         JOIN users u ON c.created_by = u.id
+         WHERE c.id = $1`,
+        [caseId]
+      );
+      caseInfo = caseResult.rows[0];
+
       // Buscar el paso que fue devuelto (PENDING con started_at más reciente)
       // Esto identifica el paso que estuvo IN_PROGRESS antes de ser devuelto
       const stepResult = await client.query(
@@ -277,6 +379,7 @@ export class FlowService {
 
       if (stepResult.rows.length > 0) {
         const returnedStep = stepResult.rows[0];
+        targetArea = returnedStep.required_area;
         
         // Activar el paso que fue devuelto
         await client.query(
@@ -291,7 +394,7 @@ export class FlowService {
           `UPDATE cases 
            SET status = 'SUBMITTED', current_area = $1 
            WHERE id = $2`,
-          [returnedStep.required_area, caseId]
+          [targetArea, caseId]
         );
       } else {
         // Si no hay pasos con started_at (caso raro), buscar el primer PENDING
@@ -307,6 +410,8 @@ export class FlowService {
         );
 
         if (firstPendingResult.rows.length > 0) {
+          targetArea = firstPendingResult.rows[0].required_area;
+          
           await client.query(
             `UPDATE workflow_step_progress
              SET status = 'IN_PROGRESS', started_at = CURRENT_TIMESTAMP
@@ -318,7 +423,7 @@ export class FlowService {
             `UPDATE cases 
              SET status = 'SUBMITTED', current_area = $1 
              WHERE id = $2`,
-            [firstPendingResult.rows[0].required_area, caseId]
+            [targetArea, caseId]
         );
         } else {
           // Si no hay pasos pendientes, volver al primer paso
@@ -334,6 +439,8 @@ export class FlowService {
           );
 
           if (firstStepResult.rows.length > 0) {
+            targetArea = firstStepResult.rows[0].required_area;
+            
             await client.query(
               `UPDATE workflow_step_progress
                SET status = 'IN_PROGRESS', started_at = CURRENT_TIMESTAMP
@@ -345,7 +452,7 @@ export class FlowService {
               `UPDATE cases 
                SET status = 'SUBMITTED', current_area = $1 
                WHERE id = $2`,
-              [firstStepResult.rows[0].required_area, caseId]
+              [targetArea, caseId]
             );
           } else {
             await client.query(
@@ -356,6 +463,17 @@ export class FlowService {
         }
       }
     });
+
+    // Crear notificación después de la transacción
+    if (targetArea && caseInfo) {
+      await NotificationService.notifyAreaCaseResubmitted(
+        caseId,
+        caseInfo.case_number,
+        caseInfo.title,
+        targetArea,
+        caseInfo.creator_name
+      );
+    }
   }
 
   /**

@@ -2,6 +2,7 @@ import { query, transaction } from '@/lib/db';
 import { Case, CaseWithCreator, CreateCaseDTO, UpdateCaseDTO } from '@/types/case.types';
 import { UserRole, UserArea } from '@/types/user.types';
 import { PoolClient } from 'pg';
+import { NotificationService } from './notification.service';
 
 export class CaseService {
   /**
@@ -196,7 +197,20 @@ export class CaseService {
    * Envía un caso para revisión
    */
   static async submitCase(caseId: string): Promise<void> {
+    let caseInfo: any;
+    let firstArea: UserArea | null = null;
+
     await transaction(async (client: PoolClient) => {
+      // Obtener información del caso
+      const caseResult = await client.query(
+        `SELECT c.case_number, c.title, c.created_by, u.first_name || ' ' || u.last_name as creator_name
+         FROM cases c
+         JOIN users u ON c.created_by = u.id
+         WHERE c.id = $1`,
+        [caseId]
+      );
+      caseInfo = caseResult.rows[0];
+
       // Obtener el primer paso del workflow
       const firstStepResult = await client.query(
         `SELECT ws.required_area
@@ -206,7 +220,6 @@ export class CaseService {
         [caseId]
       );
 
-      let firstArea = null;
       if (firstStepResult.rows.length > 0) {
         firstArea = firstStepResult.rows[0].required_area;
       }
@@ -232,6 +245,17 @@ export class CaseService {
         [caseId]
       );
     });
+
+    // Crear notificación después de la transacción
+    if (firstArea && caseInfo) {
+      await NotificationService.notifyAreaNewCase(
+        caseId,
+        caseInfo.case_number,
+        caseInfo.title,
+        firstArea,
+        caseInfo.creator_name
+      );
+    }
   }
 
   /**

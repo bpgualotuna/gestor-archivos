@@ -1,12 +1,31 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { useCases } from '@/hooks/useCases';
 import { CaseCard } from '@/components/cases/CaseCard';
 import Link from 'next/link';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Search, X } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: cases, isLoading, error } = useCases(true); // Solo casos asignados
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filtrar casos según la búsqueda
+  const filteredCases = useMemo(() => {
+    if (!cases) return [];
+    if (!searchQuery.trim()) return cases;
+
+    const query = searchQuery.toLowerCase();
+    return cases.filter((caseData) => {
+      return (
+        caseData.title.toLowerCase().includes(query) ||
+        caseData.caseNumber.toLowerCase().includes(query) ||
+        caseData.description?.toLowerCase().includes(query)
+      );
+    });
+  }, [cases, searchQuery]);
+
+  const displayCases = searchQuery ? filteredCases : cases?.slice(0, 6) || [];
 
   if (isLoading) {
     return (
@@ -23,8 +42,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const recentCases = cases?.slice(0, 6) || [];
 
   return (
     <div className="space-y-6">
@@ -69,16 +86,53 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Barra de búsqueda */}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Buscar por título, número de caso o descripción..."
+          className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-500"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
       {/* Recent Cases */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Casos Recientes</h3>
-          <Link href="/cases" className="text-blue-600 hover:text-blue-700 text-sm">
-            Ver todos
-          </Link>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {searchQuery ? 'Resultados de Búsqueda' : 'Casos Recientes'}
+            </h3>
+            {searchQuery && (
+              <p className="text-sm text-gray-600 mt-1">
+                {filteredCases.length === 0 ? (
+                  <>No se encontraron casos que coincidan con "{searchQuery}"</>
+                ) : (
+                  <>{filteredCases.length} {filteredCases.length === 1 ? 'caso encontrado' : 'casos encontrados'}</>
+                )}
+              </p>
+            )}
+          </div>
+          {!searchQuery && (
+            <Link href="/cases" className="text-blue-600 hover:text-blue-700 text-sm">
+              Ver todos
+            </Link>
+          )}
         </div>
         
-        {recentCases.length === 0 ? (
+        {displayCases.length === 0 && !searchQuery ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <p className="text-gray-500">No hay casos aún</p>
             <Link
@@ -89,9 +143,15 @@ export default function DashboardPage() {
               Crear tu primer caso
             </Link>
           </div>
+        ) : displayCases.length === 0 && searchQuery ? (
+          <div className="bg-white rounded-lg shadow p-12 text-center">
+            <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-500 mb-2">No se encontraron casos</p>
+            <p className="text-sm text-gray-400">Intenta con otros términos de búsqueda</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recentCases.map((caseData) => (
+            {displayCases.map((caseData) => (
               <CaseCard key={caseData.id} case={caseData} />
             ))}
           </div>

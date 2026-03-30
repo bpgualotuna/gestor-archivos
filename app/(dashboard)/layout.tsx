@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Home, FolderOpen, CheckSquare, Settings, Menu, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Users, Workflow, LayoutDashboard } from 'lucide-react';
 import { UserMenu } from '@/components/shared/UserMenu';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
@@ -44,7 +45,10 @@ export default function DashboardLayout({
                 Sistema de Gestión
               </h1>
             </div>
-            <UserMenu />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <UserMenu />
+            </div>
           </div>
         </div>
       </header>
