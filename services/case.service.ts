@@ -1,18 +1,19 @@
 import { query, transaction } from '@/lib/db';
 import { Case, CaseWithCreator, CreateCaseDTO, UpdateCaseDTO } from '@/types/case.types';
-import { UserRole } from '@/types/user.types';
+import { UserRole, UserArea } from '@/types/user.types';
 import { PoolClient } from 'pg';
 
 export class CaseService {
   /**
    * Obtiene todos los casos con información del creador
    * Filtrado según el rol del usuario
+   * @param assignedOnly - Si es true, solo devuelve casos asignados al área del usuario
    */
-  static async getAllCases(userId: string, role: UserRole): Promise<CaseWithCreator[]> {
+  static async getAllCases(userId: string, role: UserRole, area: UserArea | undefined, assignedOnly: boolean = false): Promise<CaseWithCreator[]> {
     // Usar la función de PostgreSQL que filtra según el rol
     const result = await query<any>(
-      'SELECT * FROM get_cases_for_user($1, $2)',
-      [userId, role]
+      'SELECT * FROM get_cases_for_user($1, $2, $3, $4)',
+      [userId, role, area, assignedOnly]
     );
 
     return result.rows.map(this.mapCaseFromDb);
@@ -39,17 +40,16 @@ export class CaseService {
       // Crear el caso con todos los campos
       const caseResult = await client.query<Case>(
         `INSERT INTO cases (
-          title, description, priority, due_date, created_by, status,
+          title, description, due_date, created_by, status,
           advisor_name, document_file_name, odoo_code, client_provider,
           document_type, sharepoint_url, request_date, required_delivery_date,
           urgency_justification, signature_type, template_type, observations
          )
-         VALUES ($1, $2, $3, $4, $5, 'DRAFT', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+         VALUES ($1, $2, $3, $4, 'DRAFT', $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          RETURNING *`,
         [
           data.title,
           data.description,
-          data.priority || 0,
           data.dueDate,
           userId,
           data.advisorName,
@@ -122,10 +122,6 @@ export class CaseService {
     if (data.status !== undefined) {
       fields.push(`status = $${paramCount++}`);
       values.push(data.status);
-    }
-    if (data.priority !== undefined) {
-      fields.push(`priority = $${paramCount++}`);
-      values.push(data.priority);
     }
     if (data.dueDate !== undefined) {
       fields.push(`due_date = $${paramCount++}`);
@@ -203,24 +199,24 @@ export class CaseService {
     await transaction(async (client: PoolClient) => {
       // Obtener el primer paso del workflow
       const firstStepResult = await client.query(
-        `SELECT ws.required_role
+        `SELECT ws.required_area
          FROM case_workflows cw
          JOIN workflow_steps ws ON ws.workflow_template_id = cw.workflow_template_id
          WHERE cw.case_id = $1 AND ws.step_order = 1`,
         [caseId]
       );
 
-      let firstAreaRole = null;
+      let firstArea = null;
       if (firstStepResult.rows.length > 0) {
-        firstAreaRole = firstStepResult.rows[0].required_role;
+        firstArea = firstStepResult.rows[0].required_area;
       }
 
       // Actualizar estado del caso
       await client.query(
         `UPDATE cases 
-         SET status = 'SUBMITTED', current_area_role = $1 
+         SET status = 'SUBMITTED', current_area = $1 
          WHERE id = $2`,
-        [firstAreaRole, caseId]
+        [firstArea, caseId]
       );
 
       // Marcar el primer paso como IN_PROGRESS
@@ -249,9 +245,7 @@ export class CaseService {
       description: row.description,
       status: row.status,
       createdBy: row.created_by,
-      currentStepId: row.current_step_id,
-      currentAreaRole: row.current_area_role,
-      priority: row.priority,
+      currentArea: row.current_area,
       dueDate: row.due_date,
       completedAt: row.completed_at,
       createdAt: row.created_at,

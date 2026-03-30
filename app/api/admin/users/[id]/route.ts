@@ -8,7 +8,8 @@ import { ValidationError, NotFoundError } from '@/lib/utils/errors';
 const updateUserSchema = z.object({
   firstName: z.string().min(2).optional(),
   lastName: z.string().min(2).optional(),
-  role: z.enum(['USER', 'COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL', 'ADMIN']).optional(),
+  role: z.enum(['USER', 'AREA_USER', 'ADMIN']).optional(),
+  area: z.enum(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -27,6 +28,11 @@ export async function PATCH(
     const body = await request.json();
     const validatedData = updateUserSchema.parse(body);
 
+    // Validar que si es AREA_USER, tenga área
+    if (validatedData.role === 'AREA_USER' && validatedData.area === null) {
+      return errorResponse(new ValidationError('Los usuarios de área deben tener un área asignada'));
+    }
+
     const fields: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -43,6 +49,10 @@ export async function PATCH(
       fields.push(`role = $${paramCount++}`);
       values.push(validatedData.role);
     }
+    if (validatedData.area !== undefined) {
+      fields.push(`area = $${paramCount++}`);
+      values.push(validatedData.area);
+    }
     if (validatedData.isActive !== undefined) {
       fields.push(`is_active = $${paramCount++}`);
       values.push(validatedData.isActive);
@@ -57,7 +67,7 @@ export async function PATCH(
       `UPDATE users
        SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
        WHERE id = $${paramCount}
-       RETURNING id, email, first_name, last_name, role, is_active, created_at`,
+       RETURNING id, email, first_name, last_name, role, area, is_active, created_at`,
       values
     );
 
@@ -72,6 +82,7 @@ export async function PATCH(
       lastName: result.rows[0].last_name,
       name: `${result.rows[0].first_name} ${result.rows[0].last_name}`,
       role: result.rows[0].role,
+      area: result.rows[0].area,
       isActive: result.rows[0].is_active,
       createdAt: result.rows[0].created_at,
     };

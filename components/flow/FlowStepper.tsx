@@ -5,6 +5,13 @@ interface FlowStepperProps {
   steps: WorkflowProgressView[];
 }
 
+const areaLabels: Record<string, string> = {
+  COMERCIAL: 'Comercial',
+  TECNICA: 'Técnica',
+  FINANCIERA: 'Financiera',
+  LEGAL: 'Legal',
+};
+
 export function FlowStepper({ steps }: FlowStepperProps) {
   const getStepIcon = (status: string) => {
     switch (status) {
@@ -52,7 +59,7 @@ export function FlowStepper({ steps }: FlowStepperProps) {
                   </span>
                 </div>
                 <div className="mt-2 text-xs text-gray-500">
-                  {step.requiredRole}
+                  Área: {areaLabels[step.requiredArea] || step.requiredArea}
                 </div>
                 {step.reviewedByName && (
                   <div className="mt-1 text-xs text-gray-600">

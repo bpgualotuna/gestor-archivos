@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 import { useFlow } from '@/hooks/useFlow';
+import { useToast } from '@/hooks/useToast';
+import { Toast } from '@/components/shared/Toast';
 
 interface ApprovalActionsProps {
   caseId: string;
@@ -21,6 +23,7 @@ export function ApprovalActions({
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [comments, setComments] = useState('');
   const [returnReason, setReturnReason] = useState('');
+  const { toasts, hideToast, success, error } = useToast();
 
   const { approveStep, returnCase, isApproving, isReturning } = useFlow();
 
@@ -31,27 +34,27 @@ export function ApprovalActions({
       setComments('');
       
       // Mostrar mensaje de éxito
-      alert('✅ Caso aprobado exitosamente. Avanzando al siguiente paso...');
+      success('Caso aprobado exitosamente. Avanzando al siguiente paso...');
       
       // Delay antes de redirigir para evitar errores de refetch
       setTimeout(() => {
         onSuccess?.();
       }, 1500);
-    } catch (error) {
-      console.error('Error al aprobar:', error);
-      alert('❌ Error al aprobar el caso. Por favor intenta nuevamente.');
+    } catch (err) {
+      console.error('Error al aprobar:', err);
+      error('Error al aprobar el caso. Por favor intenta nuevamente.');
     }
   };
 
   const handleReturn = async () => {
     // Validar campos antes de enviar
     if (!returnReason.trim()) {
-      alert('❌ Debes proporcionar un motivo de devolución');
+      error('Debes proporcionar un motivo de devolución');
       return;
     }
 
     if (!comments.trim() || comments.trim().length < 10) {
-      alert('❌ Los comentarios deben tener al menos 10 caracteres');
+      error('Los comentarios deben tener al menos 10 caracteres');
       return;
     }
 
@@ -62,15 +65,15 @@ export function ApprovalActions({
       setReturnReason('');
       
       // Mostrar mensaje de éxito
-      alert('✅ Caso devuelto exitosamente. El usuario recibirá una notificación.');
+      success('Caso devuelto exitosamente. El usuario recibirá una notificación.');
       
       // Delay antes de redirigir para evitar errores de refetch
       setTimeout(() => {
         onSuccess?.();
       }, 1500);
-    } catch (error: any) {
-      console.error('Error al devolver:', error);
-      alert(`❌ Error al devolver el caso: ${error.message || 'Por favor intenta nuevamente.'}`);
+    } catch (err: any) {
+      console.error('Error al devolver:', err);
+      error(err.message || 'Error al devolver el caso. Por favor intenta nuevamente.');
     }
   };
 
@@ -106,9 +109,9 @@ export function ApprovalActions({
 
       {/* Modal de Aprobación */}
       {showApproveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg sm:text-xl font-semibold mb-4">Aprobar Paso</h3>
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Aprobar Paso</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -148,9 +151,9 @@ export function ApprovalActions({
 
       {/* Modal de Devolución */}
       {showReturnModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg sm:text-xl font-semibold mb-4">Devolver Caso</h3>
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Devolver Caso</h3>
             
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -213,6 +216,16 @@ export function ApprovalActions({
           </div>
         </div>
       )}
+
+      {/* Toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => hideToast(toast.id)}
+        />
+      ))}
     </div>
   );
 }

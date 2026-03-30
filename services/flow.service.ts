@@ -1,6 +1,6 @@
 import { query, transaction } from '@/lib/db';
 import { WorkflowProgressView } from '@/types/flow.types';
-import { UserRole } from '@/types/user.types';
+import { UserRole, UserArea } from '@/types/user.types';
 import { ForbiddenError, ValidationError } from '@/lib/utils/errors';
 import { PoolClient } from 'pg';
 
@@ -18,7 +18,7 @@ export class FlowService {
         wt.name as workflow_name,
         ws.step_order,
         ws.step_name,
-        ws.required_role,
+        ws.required_area,
         wsp.status as step_status,
         wsp.assigned_to,
         wsp.reviewed_by,
@@ -47,12 +47,13 @@ export class FlowService {
     caseId: string, 
     userId: string, 
     userRole: UserRole,
+    userArea: UserArea | undefined,
     comments?: string
   ): Promise<void> {
     await transaction(async (client: PoolClient) => {
       // Obtener el paso actual y verificar permisos
       const currentStepResult = await client.query(
-        `SELECT wsp.id, ws.step_order, ws.required_role, cw.workflow_template_id, c.current_area_role
+        `SELECT wsp.id, ws.step_order, ws.required_area, cw.workflow_template_id, c.current_area
          FROM workflow_step_progress wsp
          JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
          JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -67,10 +68,10 @@ export class FlowService {
 
       const currentStep = currentStepResult.rows[0];
 
-      // Validar que el usuario tenga el rol correcto para aprobar
-      if (userRole !== 'ADMIN' && userRole !== currentStep.required_role) {
+      // Validar que el usuario tenga el área correcta para aprobar
+      if (userRole !== 'ADMIN' && (userRole !== 'AREA_USER' || userArea !== currentStep.required_area)) {
         throw new ForbiddenError(
-          `Solo usuarios con rol ${currentStep.required_role} pueden aprobar este paso`
+          `Solo usuarios del área ${currentStep.required_area} pueden aprobar este paso`
         );
       }
 
@@ -84,7 +85,7 @@ export class FlowService {
 
       // Verificar si hay siguiente paso
       const nextStepResult = await client.query(
-        `SELECT wsp.id, ws.required_role
+        `SELECT wsp.id, ws.required_area
          FROM workflow_step_progress wsp
          JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
          JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
@@ -104,15 +105,15 @@ export class FlowService {
         // Actualizar área actual del caso
         await client.query(
           `UPDATE cases 
-           SET status = 'IN_REVIEW', current_area_role = $1 
+           SET status = 'IN_REVIEW', current_area = $1 
            WHERE id = $2`,
-          [nextStepResult.rows[0].required_role, caseId]
+          [nextStepResult.rows[0].required_area, caseId]
         );
       } else {
         // No hay más pasos, marcar caso como aprobado
         await client.query(
           `UPDATE cases 
-           SET status = 'APPROVED', current_area_role = NULL, completed_at = CURRENT_TIMESTAMP 
+           SET status = 'APPROVED', current_area = NULL, completed_at = CURRENT_TIMESTAMP 
            WHERE id = $1`,
           [caseId]
         );
@@ -139,12 +140,13 @@ export class FlowService {
     caseId: string, 
     userId: string, 
     userRole: UserRole,
+    userArea: UserArea | undefined,
     comments: string
   ): Promise<void> {
     await transaction(async (client: PoolClient) => {
       // Verificar permisos
       const stepResult = await client.query(
-        `SELECT ws.required_role
+        `SELECT ws.required_area
          FROM workflow_step_progress wsp
          JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
          JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -156,9 +158,9 @@ export class FlowService {
         throw new ValidationError('No hay paso en progreso para rechazar');
       }
 
-      if (userRole !== 'ADMIN' && userRole !== stepResult.rows[0].required_role) {
+      if (userRole !== 'ADMIN' && (userRole !== 'AREA_USER' || userArea !== stepResult.rows[0].required_area)) {
         throw new ForbiddenError(
-          `Solo usuarios con rol ${stepResult.rows[0].required_role} pueden rechazar este paso`
+          `Solo usuarios del área ${stepResult.rows[0].required_area} pueden rechazar este paso`
         );
       }
 
@@ -175,7 +177,7 @@ export class FlowService {
 
       // Marcar caso como rechazado
       await client.query(
-        `UPDATE cases SET status = 'REJECTED', current_area_role = NULL WHERE id = $1`,
+        `UPDATE cases SET status = 'REJECTED', current_area = NULL WHERE id = $1`,
         [caseId]
       );
 
@@ -195,13 +197,14 @@ export class FlowService {
     caseId: string,
     userId: string,
     userRole: UserRole,
+    userArea: UserArea | undefined,
     comments: string,
     returnReason: string
   ): Promise<void> {
     await transaction(async (client: PoolClient) => {
       // Verificar permisos
       const stepResult = await client.query(
-        `SELECT ws.required_role
+        `SELECT ws.required_area
          FROM workflow_step_progress wsp
          JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
          JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -213,9 +216,9 @@ export class FlowService {
         throw new ValidationError('No hay paso en progreso para devolver');
       }
 
-      if (userRole !== 'ADMIN' && userRole !== stepResult.rows[0].required_role) {
+      if (userRole !== 'ADMIN' && (userRole !== 'AREA_USER' || userArea !== stepResult.rows[0].required_area)) {
         throw new ForbiddenError(
-          `Solo usuarios con rol ${stepResult.rows[0].required_role} pueden devolver este paso`
+          `Solo usuarios del área ${stepResult.rows[0].required_area} pueden devolver este paso`
         );
       }
 
@@ -232,7 +235,7 @@ export class FlowService {
 
       // Marcar caso como devuelto
       await client.query(
-        `UPDATE cases SET status = 'RETURNED', current_area_role = NULL WHERE id = $1`,
+        `UPDATE cases SET status = 'RETURNED', current_area = NULL WHERE id = $1`,
         [caseId]
       );
 
@@ -260,7 +263,7 @@ export class FlowService {
       // Buscar el paso que fue devuelto (PENDING con started_at más reciente)
       // Esto identifica el paso que estuvo IN_PROGRESS antes de ser devuelto
       const stepResult = await client.query(
-        `SELECT wsp.id, ws.required_role, ws.step_order
+        `SELECT wsp.id, ws.required_area, ws.step_order
          FROM workflow_step_progress wsp
          JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
          JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -286,14 +289,14 @@ export class FlowService {
         // Actualizar área actual del caso al área que lo devolvió
         await client.query(
           `UPDATE cases 
-           SET status = 'SUBMITTED', current_area_role = $1 
+           SET status = 'SUBMITTED', current_area = $1 
            WHERE id = $2`,
-          [returnedStep.required_role, caseId]
+          [returnedStep.required_area, caseId]
         );
       } else {
         // Si no hay pasos con started_at (caso raro), buscar el primer PENDING
         const firstPendingResult = await client.query(
-          `SELECT wsp.id, ws.required_role
+          `SELECT wsp.id, ws.required_area
            FROM workflow_step_progress wsp
            JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
            JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -313,14 +316,14 @@ export class FlowService {
 
           await client.query(
             `UPDATE cases 
-             SET status = 'SUBMITTED', current_area_role = $1 
+             SET status = 'SUBMITTED', current_area = $1 
              WHERE id = $2`,
-            [firstPendingResult.rows[0].required_role, caseId]
-          );
+            [firstPendingResult.rows[0].required_area, caseId]
+        );
         } else {
           // Si no hay pasos pendientes, volver al primer paso
           const firstStepResult = await client.query(
-            `SELECT wsp.id, ws.required_role
+            `SELECT wsp.id, ws.required_area
              FROM workflow_step_progress wsp
              JOIN case_workflows cw ON wsp.case_workflow_id = cw.id
              JOIN workflow_steps ws ON wsp.workflow_step_id = ws.id
@@ -340,9 +343,9 @@ export class FlowService {
 
             await client.query(
               `UPDATE cases 
-               SET status = 'SUBMITTED', current_area_role = $1 
+               SET status = 'SUBMITTED', current_area = $1 
                WHERE id = $2`,
-              [firstStepResult.rows[0].required_role, caseId]
+              [firstStepResult.rows[0].required_area, caseId]
             );
           } else {
             await client.query(
@@ -365,7 +368,7 @@ export class FlowService {
       workflowName: row.workflow_name,
       stepOrder: row.step_order,
       stepName: row.step_name,
-      requiredRole: row.required_role,
+      requiredArea: row.required_area,
       stepStatus: row.step_status,
       assignedTo: row.assigned_to,
       reviewedBy: row.reviewed_by,

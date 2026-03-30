@@ -28,7 +28,7 @@ export default function CasesPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Mis Casos</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Casos</h2>
           <p className="text-gray-600 mt-1">Gestiona todos tus casos</p>
         </div>
         <Link

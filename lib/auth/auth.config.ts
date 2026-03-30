@@ -2,7 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { query } from '@/lib/db';
-import { UserRole } from '@/types/user.types';
+import { UserRole, UserArea } from '@/types/user.types';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
 
         // Buscar usuario en la base de datos
         const result = await query(
-          `SELECT id, email, password_hash, first_name, last_name, role, is_active 
+          `SELECT id, email, password_hash, first_name, last_name, role, area, is_active 
            FROM users 
            WHERE email = $1`,
           [credentials.email]
@@ -66,6 +66,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: `${user.first_name} ${user.last_name}`,
           role: user.role,
+          area: user.area,
         };
       }
     })
@@ -77,6 +78,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.area = user.area;
         token.email = user.email;
       }
       return token;
@@ -87,9 +89,23 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
+        session.user.area = token.area as UserArea | undefined;
         session.user.email = token.email as string;
       }
       return session;
+    },
+    
+    async redirect({ url, baseUrl }) {
+      // Si la URL ya es una ruta específica, usarla
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Si es una URL relativa, usarla
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // Por defecto, redirigir al baseUrl
+      return baseUrl;
     }
   },
   

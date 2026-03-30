@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Plus, Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { data: cases, isLoading, error } = useCases();
+  const { data: cases, isLoading, error } = useCases(true); // Solo casos asignados
 
   if (isLoading) {
     return (

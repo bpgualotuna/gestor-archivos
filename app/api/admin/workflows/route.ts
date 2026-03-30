@@ -12,7 +12,7 @@ const updateWorkflowSchema = z.object({
   steps: z.array(z.object({
     id: z.string().uuid().optional(),
     name: z.string().min(3),
-    requiredRole: z.enum(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']),
+    requiredArea: z.enum(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']),
     stepOrder: z.number().int().min(1),
   })).min(1).optional(),
 });
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const workflows = await Promise.all(
       workflowsResult.rows.map(async (workflow: any) => {
         const stepsResult = await query(
-          `SELECT id, step_name, required_role, step_order
+          `SELECT id, step_name, required_area, step_order
            FROM workflow_steps
            WHERE workflow_template_id = $1
            AND step_name NOT LIKE '%(histórico)%'
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           steps: stepsResult.rows.map((step: any) => ({
             id: step.id,
             name: step.step_name,
-            requiredRole: step.required_role,
+            requiredArea: step.required_area,
             stepOrder: step.step_order,
           })),
         };
@@ -156,9 +156,9 @@ export async function PATCH(request: NextRequest) {
         // Crear los nuevos pasos con los nuevos valores
         for (const step of validatedData.steps) {
           await client.query(
-            `INSERT INTO workflow_steps (workflow_template_id, step_name, required_role, step_order)
+            `INSERT INTO workflow_steps (workflow_template_id, step_name, required_area, step_order)
              VALUES ($1, $2, $3, $4)`,
-            [workflowId, step.name, step.requiredRole, step.stepOrder]
+            [workflowId, step.name, step.requiredArea, step.stepOrder]
           );
         }
       }
@@ -170,7 +170,7 @@ export async function PATCH(request: NextRequest) {
       );
 
       const stepsResult = await client.query(
-        `SELECT id, step_name, required_role, step_order
+        `SELECT id, step_name, required_area, step_order
          FROM workflow_steps
          WHERE workflow_template_id = $1
          ORDER BY step_order`,
@@ -186,7 +186,7 @@ export async function PATCH(request: NextRequest) {
         steps: stepsResult.rows.map((step: any) => ({
           id: step.id,
           name: step.step_name,
-          requiredRole: step.required_role,
+          requiredArea: step.required_area,
           stepOrder: step.step_order,
         })),
       };

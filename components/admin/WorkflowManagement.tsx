@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Edit, Loader2, ArrowRight } from 'lucide-react';
+import { useToast } from '@/hooks/useToast';
+import { Toast } from '@/components/shared/Toast';
 
 interface WorkflowStep {
   id?: string;
   name: string;
-  requiredRole: string;
+  requiredArea: string;
   stepOrder: number;
 }
 
@@ -30,6 +32,7 @@ const roleLabels: Record<string, string> = {
 export function WorkflowManagement() {
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const queryClient = useQueryClient();
+  const { toasts, hideToast, success, error } = useToast();
 
   const { data: workflows, isLoading } = useQuery<Workflow[]>({
     queryKey: ['admin-workflows'],
@@ -49,18 +52,18 @@ export function WorkflowManagement() {
         body: JSON.stringify(workflowData),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al actualizar workflow');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al actualizar workflow');
       }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-workflows'] });
       setEditingWorkflow(null);
-      alert('✅ Workflow actualizado exitosamente');
+      success('Workflow actualizado exitosamente');
     },
-    onError: (error: Error) => {
-      alert(`❌ ${error.message}`);
+    onError: (err: Error) => {
+      error(err.message);
     },
   });
 
@@ -128,7 +131,7 @@ export function WorkflowManagement() {
                       {step.stepOrder}. {step.name}
                     </div>
                     <div className="text-xs text-blue-600 mt-1">
-                      {roleLabels[step.requiredRole]}
+                      {roleLabels[step.requiredArea]}
                     </div>
                   </div>
                   {idx < activeWorkflow.steps.length - 1 && (
@@ -155,6 +158,16 @@ export function WorkflowManagement() {
           isLoading={updateMutation.isPending}
         />
       )}
+
+      {/* Toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => hideToast(toast.id)}
+        />
+      ))}
     </div>
   );
 }
@@ -170,6 +183,7 @@ function EditWorkflowModal({
   onSubmit: (data: any) => void;
   isLoading: boolean;
 }) {
+  const { toasts, hideToast, error } = useToast();
   const [formData, setFormData] = useState({
     name: workflow.name,
     description: workflow.description || '',
@@ -183,7 +197,7 @@ function EditWorkflowModal({
         ...formData.steps,
         {
           name: '',
-          requiredRole: 'COMERCIAL',
+          requiredArea: 'COMERCIAL',
           stepOrder: formData.steps.length + 1,
         },
       ],
@@ -192,7 +206,7 @@ function EditWorkflowModal({
 
   const removeStep = (index: number) => {
     if (formData.steps.length <= 1) {
-      alert('Debe haber al menos un paso en el workflow');
+      error('Debe haber al menos un paso en el workflow');
       return;
     }
     const newSteps = formData.steps.filter((_, i) => i !== index);
@@ -215,9 +229,9 @@ function EditWorkflowModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg p-4 sm:p-6 max-w-2xl w-full my-8">
-        <h3 className="text-lg sm:text-xl font-semibold mb-4">Editar Workflow</h3>
+    <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg p-4 sm:p-6 max-w-2xl w-full my-8 shadow-2xl border border-gray-200">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4">Editar Workflow</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -290,8 +304,8 @@ function EditWorkflowModal({
                     />
 
                     <select
-                      value={step.requiredRole}
-                      onChange={(e) => updateStep(index, 'requiredRole', e.target.value)}
+                      value={step.requiredArea}
+                      onChange={(e) => updateStep(index, 'requiredArea', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm"
                     >
                       <option value="COMERCIAL">Comercial</option>
@@ -323,6 +337,16 @@ function EditWorkflowModal({
             </button>
           </div>
         </form>
+
+        {/* Toasts */}
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => hideToast(toast.id)}
+          />
+        ))}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { FileService } from '@/services/file.service';
 import { uploadFileSchema, MAX_FILE_SIZE } from '@/lib/validations/file.schema';
 import { successResponse, errorResponse } from '@/lib/utils/response';
 import { ValidationError } from '@/lib/utils/errors';
-import { requireAuth, canAccessCase } from '@/lib/auth/get-session';
+import { requireAuth, canInteractWithCase } from '@/lib/auth/get-session';
 import { query } from '@/lib/db';
 
 /**
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar acceso al caso
     const caseResult = await query(
-      'SELECT created_by, current_area_role FROM cases WHERE id = $1',
+      'SELECT created_by, current_area FROM cases WHERE id = $1',
       [caseId]
     );
     
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       throw new ValidationError('Caso no encontrado');
     }
 
-    await canAccessCase(caseResult.rows[0].created_by, caseResult.rows[0].current_area_role);
+    await canInteractWithCase(caseResult.rows[0].created_by, caseResult.rows[0].current_area);
 
     // Validar datos
     const validatedData = uploadFileSchema.parse({

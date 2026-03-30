@@ -1,24 +1,36 @@
 -- Migración: Agregar campos del formulario de revisión legal
 -- Fecha: 2026-03-29
 
--- Agregar nuevos tipos ENUM
-CREATE TYPE document_type AS ENUM (
-    'CONTRATO',
-    'CONVENIO',
-    'ACUERDO',
-    'OTRO'
-);
+-- Agregar nuevos tipos ENUM (solo si no existen)
+DO $$ BEGIN
+    CREATE TYPE document_type AS ENUM (
+        'CONTRATO',
+        'CONVENIO',
+        'ACUERDO',
+        'OTRO'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE signature_type AS ENUM (
-    'FISICA',
-    'ELECTRONICA'
-);
+DO $$ BEGIN
+    CREATE TYPE signature_type AS ENUM (
+        'FISICA',
+        'ELECTRONICA'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
-CREATE TYPE template_type AS ENUM (
-    'PLANTILLA_COMWARE',
-    'PLANTILLA_CLIENTE',
-    'PLANTILLA_PROVEEDOR'
-);
+DO $$ BEGIN
+    CREATE TYPE template_type AS ENUM (
+        'PLANTILLA_COMWARE',
+        'PLANTILLA_CLIENTE',
+        'PLANTILLA_PROVEEDOR'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Agregar nuevas columnas a la tabla cases
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS advisor_name VARCHAR(255);
@@ -34,9 +46,13 @@ ALTER TABLE cases ADD COLUMN IF NOT EXISTS signature_type signature_type;
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS template_type template_type;
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS observations TEXT;
 
--- Agregar constraint para código Odoo (debe empezar con S)
-ALTER TABLE cases ADD CONSTRAINT check_odoo_code_format 
-    CHECK (odoo_code IS NULL OR odoo_code ~ '^S');
+-- Agregar constraint para código Odoo (debe empezar con S) - solo si no existe
+DO $$ BEGIN
+    ALTER TABLE cases ADD CONSTRAINT check_odoo_code_format 
+        CHECK (odoo_code IS NULL OR odoo_code ~ '^S');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Agregar comentarios a las nuevas columnas
 COMMENT ON COLUMN cases.advisor_name IS 'Asesor comercial o responsable de la solicitud';

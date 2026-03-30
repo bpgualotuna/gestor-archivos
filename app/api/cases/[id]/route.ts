@@ -26,7 +26,7 @@ export async function GET(
     }
 
     // Verificar permisos de acceso
-    await canAccessCase(caseData.createdBy, caseData.currentAreaRole);
+    await canAccessCase(caseData.createdBy, caseData.currentArea);
 
     return successResponse(caseData);
   } catch (error) {
@@ -54,7 +54,7 @@ export async function PATCH(
     }
 
     // Verificar permisos de acceso
-    await canAccessCase(caseData.createdBy, caseData.currentAreaRole);
+    await canAccessCase(caseData.createdBy, caseData.currentArea);
 
     const body = await request.json();
     const validatedData = updateCaseSchema.parse(body);

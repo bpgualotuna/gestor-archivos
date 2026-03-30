@@ -7,14 +7,13 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: 20, // Máximo de conexiones en el pool
-  min: 2, // Mínimo de conexiones activas
-  idleTimeoutMillis: 30000, // 30s para cerrar conexiones inactivas
-  connectionTimeoutMillis: 30000, // 30s timeout para establecer conexión
-  statement_timeout: 60000, // 60s timeout para queries
-  query_timeout: 60000, // 60s timeout para queries
-  keepAlive: true, // Mantener conexiones vivas
-  keepAliveInitialDelayMillis: 10000, // 10s delay inicial para keep-alive
+  max: 5, // Reducido para Azure PostgreSQL (límite de conexiones)
+  min: 0, // Sin conexiones mínimas para liberar recursos
+  idleTimeoutMillis: 10000, // 10s para cerrar conexiones inactivas más rápido
+  connectionTimeoutMillis: 10000, // 10s timeout para establecer conexión
+  statement_timeout: 30000, // 30s timeout para queries
+  query_timeout: 30000, // 30s timeout para queries
+  allowExitOnIdle: true, // Permitir que el pool se cierre cuando no hay actividad
   ssl: {
     rejectUnauthorized: false // OBLIGATORIO para Azure PostgreSQL
   }

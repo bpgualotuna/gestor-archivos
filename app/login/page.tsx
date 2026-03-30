@@ -33,7 +33,16 @@ function LoginForm() {
         return;
       }
 
-      router.push(callbackUrl);
+      // Obtener la sesión para verificar el rol
+      const response = await fetch('/api/auth/session');
+      const session = await response.json();
+      
+      // Redirigir según el rol
+      if (session?.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push(callbackUrl);
+      }
       router.refresh();
     } catch (err) {
       setError('Error al iniciar sesión');

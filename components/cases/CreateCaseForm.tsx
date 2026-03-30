@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useCreateCase } from '@/hooks/useCases';
 import { useRouter } from 'next/navigation';
 import { DocumentType, SignatureType, TemplateType } from '@/types/case.types';
+import { Upload, X, FileText } from 'lucide-react';
 
 export function CreateCaseForm() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [advisorName, setAdvisorName] = useState('');
-  const [documentFileName, setDocumentFileName] = useState('');
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const [odooCode, setOdooCode] = useState('');
   const [clientProvider, setClientProvider] = useState('');
   const [documentType, setDocumentType] = useState<DocumentType>('CONTRATO');
@@ -24,33 +25,62 @@ export function CreateCaseForm() {
   const router = useRouter();
   const createMutation = useCreateCase();
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setDocumentFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setDocumentFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    createMutation.mutate(
-      {
-        title,
-        description: description || undefined,
-        priority: 0,
-        advisorName: advisorName || undefined,
-        documentFileName: documentFileName || undefined,
-        odooCode: odooCode || undefined,
-        clientProvider: clientProvider || undefined,
-        documentType,
-        sharepointUrl: sharepointUrl || undefined,
-        requestDate: requestDate ? new Date(requestDate) : undefined,
-        requiredDeliveryDate: requiredDeliveryDate ? new Date(requiredDeliveryDate) : undefined,
-        urgencyJustification: urgencyJustification || undefined,
-        signatureType,
-        templateType,
-        observations: observations || undefined,
-      },
-      {
-        onSuccess: (data) => {
-          router.push(`/cases/${data.id}`);
-        },
+    // Crear FormData para enviar archivos y datos
+    const formData = new FormData();
+    formData.append('title', title);
+    if (description) formData.append('description', description);
+    if (advisorName) formData.append('advisorName', advisorName);
+    
+    // Agregar todos los archivos
+    documentFiles.forEach((file) => {
+      formData.append('documentFiles', file);
+    });
+    
+    // Guardar nombres de archivos separados por coma
+    const fileNames = documentFiles.map(f => f.name).join(', ');
+    formData.append('documentFileName', fileNames);
+    
+    if (odooCode) formData.append('odooCode', odooCode);
+    if (clientProvider) formData.append('clientProvider', clientProvider);
+    formData.append('documentType', documentType);
+    if (sharepointUrl) formData.append('sharepointUrl', sharepointUrl);
+    if (requestDate) formData.append('requestDate', new Date(requestDate).toISOString());
+    if (requiredDeliveryDate) formData.append('requiredDeliveryDate', new Date(requiredDeliveryDate).toISOString());
+    if (urgencyJustification) formData.append('urgencyJustification', urgencyJustification);
+    formData.append('signatureType', signatureType);
+    formData.append('templateType', templateType);
+    if (observations) formData.append('observations', observations);
+
+    try {
+      const response = await fetch('/api/cases', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear el caso');
       }
-    );
+
+      const data = await response.json();
+      router.push(`/cases/${data.data.id}`);
+    } catch (error: any) {
+      console.error('Error:', error);
+    }
   };
 
   return (
@@ -75,22 +105,65 @@ export function CreateCaseForm() {
         />
       </div>
 
-      {/* Nombre del Archivo */}
+      {/* Agregar Documentos */}
       <div>
-        <label htmlFor="documentFileName" className="block text-sm font-medium text-gray-700 mb-2">
-          2. Nombre del Documento <span className="text-red-500">*</span>
+        <label htmlFor="documentFiles" className="block text-sm font-medium text-gray-700 mb-2">
+          2. Agregar Documentos <span className="text-red-500">*</span>
         </label>
-        <input
-          type="text"
-          id="documentFileName"
-          value={documentFileName}
-          onChange={(e) => setDocumentFileName(e.target.value)}
-          required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-          placeholder="Ej: 13 Formulario Compromiso Cumplimiento Código de Conducta.docx"
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          IMPORTANTE: Debe ingresar el nombre completo incluyendo la extensión del archivo (.pdf - .doc), no olvide el punto (.) antes de la extensión.
+        
+        <div className="flex items-center justify-center w-full mb-3">
+          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+              <Upload className="w-10 h-10 mb-3 text-gray-400" />
+              <p className="mb-2 text-sm text-gray-500">
+                <span className="font-semibold">Click para subir</span> o arrastra y suelta
+              </p>
+              <p className="text-xs text-gray-500">PDF, DOC, DOCX (MAX. 10MB por archivo)</p>
+            </div>
+            <input
+              type="file"
+              id="documentFiles"
+              className="hidden"
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx"
+              multiple
+              required={documentFiles.length === 0}
+            />
+          </label>
+        </div>
+
+        {/* Lista de archivos seleccionados */}
+        {documentFiles.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">
+              Archivos seleccionados ({documentFiles.length}):
+            </p>
+            {documentFiles.map((file, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                  <span className="text-xs text-gray-500">
+                    ({(file.size / 1024).toFixed(2)} KB)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <p className="mt-2 text-xs text-gray-500">
+          IMPORTANTE: Los documentos se subirán automáticamente al crear el caso.
         </p>
       </div>
 
@@ -300,7 +373,7 @@ export function CreateCaseForm() {
 
       <button
         type="submit"
-        disabled={createMutation.isPending}
+        disabled={createMutation.isPending || documentFiles.length === 0}
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-base"
       >
         {createMutation.isPending ? 'Enviando...' : 'Enviar Solicitud'}

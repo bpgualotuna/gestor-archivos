@@ -1,4 +1,4 @@
-import { UserRole } from './user.types';
+import { UserArea } from './user.types';
 
 export type CaseStatus = 
   | 'DRAFT'
@@ -30,9 +30,7 @@ export interface Case {
   description?: string;
   status: CaseStatus;
   createdBy: string;
-  currentStepId?: string;
-  currentAreaRole?: UserRole;
-  priority: number;
+  currentArea?: UserArea;  // Cambiado de currentAreaRole
   dueDate?: Date;
   completedAt?: Date;
   createdAt: Date;
@@ -62,7 +60,6 @@ export interface CaseWithCreator extends Case {
 export interface CreateCaseDTO {
   title: string;
   description?: string;
-  priority?: number;
   dueDate?: Date;
   advisorName?: string;
   documentFileName?: string;
@@ -82,7 +79,6 @@ export interface UpdateCaseDTO {
   title?: string;
   description?: string;
   status?: CaseStatus;
-  priority?: number;
   dueDate?: Date;
   advisorName?: string;
   documentFileName?: string;

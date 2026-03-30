@@ -14,7 +14,7 @@ export class HistoryService {
        FROM audit_log al
        LEFT JOIN users u ON al.user_id = u.id
        WHERE al.case_id = $1
-       ORDER BY al.created_at DESC`,
+       ORDER BY al.created_at ASC`,
       [caseId]
     );
 

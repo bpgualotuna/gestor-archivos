@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/useToast';
+import { Toast } from '@/components/shared/Toast';
 
 interface SubmitCaseButtonProps {
   caseId: string;
@@ -12,6 +14,7 @@ interface SubmitCaseButtonProps {
 export function SubmitCaseButton({ caseId, onSuccess }: SubmitCaseButtonProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const queryClient = useQueryClient();
+  const { toasts, hideToast, success, error } = useToast();
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -20,8 +23,8 @@ export function SubmitCaseButton({ caseId, onSuccess }: SubmitCaseButtonProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al enviar caso');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al enviar caso');
       }
 
       return response.json();
@@ -31,14 +34,14 @@ export function SubmitCaseButton({ caseId, onSuccess }: SubmitCaseButtonProps) {
       queryClient.invalidateQueries({ queryKey: ['workflow', caseId] });
       queryClient.invalidateQueries({ queryKey: ['cases'] });
       
-      alert('✅ Caso enviado exitosamente. Ahora está en revisión.');
+      success('Caso enviado exitosamente. Ahora está en revisión.');
       
       setTimeout(() => {
         onSuccess?.();
       }, 1000);
     },
-    onError: (error: Error) => {
-      alert(`❌ Error: ${error.message}`);
+    onError: (err: Error) => {
+      error(err.message);
     },
   });
 
@@ -88,9 +91,9 @@ export function SubmitCaseButton({ caseId, onSuccess }: SubmitCaseButtonProps) {
 
       {/* Modal de Confirmación */}
       {showConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-semibold mb-4">Confirmar Envío</h3>
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl border border-gray-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Confirmar Envío</h3>
             
             <p className="text-gray-700 mb-6">
               ¿Estás seguro de que deseas enviar este caso para revisión? Una vez enviado, comenzará el proceso de aprobación por las diferentes áreas.
@@ -113,6 +116,16 @@ export function SubmitCaseButton({ caseId, onSuccess }: SubmitCaseButtonProps) {
           </div>
         </div>
       )}
+
+      {/* Toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => hideToast(toast.id)}
+        />
+      ))}
     </>
   );
 }

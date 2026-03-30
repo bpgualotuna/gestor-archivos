@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       validatedData.caseId,
       session.user.id,
       session.user.role,
+      session.user.area,
       validatedData.comments
     );
 

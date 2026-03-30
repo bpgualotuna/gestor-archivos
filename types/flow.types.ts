@@ -1,4 +1,4 @@
-import { UserRole } from './user.types';
+import { UserArea } from './user.types';
 
 export type WorkflowStepStatus = 
   | 'PENDING'
@@ -22,7 +22,7 @@ export interface WorkflowStep {
   workflowTemplateId: string;
   stepOrder: number;
   stepName: string;
-  requiredRole: UserRole;
+  requiredArea: UserArea;  // Cambiado de requiredRole
   isRequired: boolean;
   canSkip: boolean;
   createdAt: Date;
@@ -56,7 +56,7 @@ export interface WorkflowProgressView {
   workflowName: string;
   stepOrder: number;
   stepName: string;
-  requiredRole: UserRole;
+  requiredArea: UserArea;  // Cambiado de requiredRole
   stepStatus: WorkflowStepStatus;
   assignedTo?: string;
   reviewedBy?: string;

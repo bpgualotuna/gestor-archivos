@@ -3,9 +3,8 @@ import { z } from 'zod';
 export const createCaseSchema = z.object({
   title: z.string().min(3, 'El título debe tener al menos 3 caracteres').max(255),
   description: z.string().optional(),
-  priority: z.number().int().min(0).max(10).optional().default(0),
   dueDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
-  // Nuevos campos del formulario de revisión legal
+  // Campos del formulario de revisión legal
   advisorName: z.string().min(3, 'El nombre del asesor es requerido').optional(),
   documentFileName: z.string().min(3, 'El nombre del archivo es requerido').optional(),
   odooCode: z.string().max(6, 'El código Odoo debe tener máximo 6 caracteres').regex(/^S/, 'El código Odoo debe empezar con "S"').optional().or(z.literal('')),
@@ -33,7 +32,6 @@ export const updateCaseSchema = z.object({
     'COMPLETED',
     'CANCELLED',
   ]).optional(),
-  priority: z.number().int().min(0).max(10).optional(),
   dueDate: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
   advisorName: z.string().min(3).optional(),
   documentFileName: z.string().min(3).optional(),

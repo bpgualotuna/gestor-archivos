@@ -3,12 +3,14 @@ import { CaseWithCreator, CreateCaseDTO } from '@/types/case.types';
 
 /**
  * Hook para obtener todos los casos
+ * @param assignedOnly - Si es true, solo devuelve casos asignados al área del usuario
  */
-export function useCases() {
+export function useCases(assignedOnly: boolean = false) {
   return useQuery<CaseWithCreator[]>({
-    queryKey: ['cases'],
+    queryKey: ['cases', assignedOnly],
     queryFn: async () => {
-      const response = await fetch('/api/cases');
+      const url = assignedOnly ? '/api/cases?assignedOnly=true' : '/api/cases';
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Error al cargar casos');
       const data = await response.json();
       return data.data;

@@ -1,10 +1,13 @@
 export type UserRole = 
-  | 'USER' 
+  | 'USER'       // Usuario normal (crea casos)
+  | 'AREA_USER'  // Usuario de área (revisa casos)
+  | 'ADMIN';     // Administrador
+
+export type UserArea = 
   | 'COMERCIAL' 
   | 'TECNICA' 
   | 'FINANCIERA' 
-  | 'LEGAL' 
-  | 'ADMIN';
+  | 'LEGAL';
 
 export interface User {
   id: string;
@@ -12,6 +15,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
+  area?: UserArea;  // Solo para AREA_USER
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -24,4 +28,5 @@ export interface CreateUserDTO {
   firstName: string;
   lastName: string;
   role: UserRole;
+  area?: UserArea;  // Requerido si role es AREA_USER
 }

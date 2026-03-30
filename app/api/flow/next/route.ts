@@ -16,12 +16,12 @@ export async function POST(request: NextRequest) {
 
     // Verificar acceso al caso
     const caseResult = await query(
-      'SELECT created_by, current_area_role FROM cases WHERE id = $1',
+      'SELECT created_by, current_area FROM cases WHERE id = $1',
       [caseId]
     );
     
     if (caseResult.rows.length > 0) {
-      await canAccessCase(caseResult.rows[0].created_by, caseResult.rows[0].current_area_role);
+      await canAccessCase(caseResult.rows[0].created_by, caseResult.rows[0].current_area);
     }
 
     const progress = await FlowService.getWorkflowProgress(caseId);

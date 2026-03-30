@@ -1,5 +1,5 @@
 import { useSession } from 'next-auth/react';
-import { UserRole } from '@/types/user.types';
+import { UserRole, UserArea } from '@/types/user.types';
 
 export function useAuth() {
   const { data: session, status } = useSession();
@@ -28,13 +28,16 @@ export function usePermissions() {
 
   const isAdmin = () => hasRole('ADMIN');
   const isUser = () => hasRole('USER');
-  const isArea = () => hasRole(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']);
+  const isAreaUser = () => hasRole('AREA_USER');
   
   const canCreateCase = () => hasRole(['USER', 'ADMIN']);
-  const canReviewCase = () => hasRole(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL', 'ADMIN']);
-  const canApproveCase = (caseAreaRole?: UserRole) => {
-    if (!user || !caseAreaRole) return false;
-    return user.role === caseAreaRole || user.role === 'ADMIN';
+  const canReviewCase = () => hasRole(['AREA_USER', 'ADMIN']);
+  
+  const canApproveCase = (caseArea?: UserArea) => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    if (user.role === 'AREA_USER' && caseArea && user.area === caseArea) return true;
+    return false;
   };
   
   const canEditCase = (caseCreatorId?: string) => {
@@ -43,11 +46,19 @@ export function usePermissions() {
     return user.id === caseCreatorId;
   };
 
-  const canViewCase = (caseCreatorId?: string, caseAreaRole?: UserRole) => {
+  const canViewCase = (caseCreatorId?: string, caseArea?: UserArea) => {
     if (!user) return false;
     if (user.role === 'ADMIN') return true;
     if (user.id === caseCreatorId) return true;
-    if (caseAreaRole && user.role === caseAreaRole) return true;
+    if (user.role === 'AREA_USER') return true; // AREA_USER puede ver todos los casos
+    return false;
+  };
+
+  const canInteractWithCase = (caseCreatorId?: string, caseArea?: UserArea) => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    if (user.id === caseCreatorId) return true;
+    if (user.role === 'AREA_USER' && caseArea && user.area === caseArea) return true;
     return false;
   };
 
@@ -55,11 +66,12 @@ export function usePermissions() {
     hasRole,
     isAdmin,
     isUser,
-    isArea,
+    isAreaUser,
     canCreateCase,
     canReviewCase,
     canApproveCase,
     canEditCase,
     canViewCase,
+    canInteractWithCase,
   };
 }

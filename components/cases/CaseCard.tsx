@@ -3,6 +3,7 @@ import { CaseWithCreator } from '@/types/case.types';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { format } from 'date-fns';
 import { FileText, MessageSquare, Calendar } from 'lucide-react';
+import { formatCaseNumber } from '@/lib/utils/format';
 
 interface CaseCardProps {
   case: CaseWithCreator;
@@ -19,7 +20,7 @@ export function CaseCard({ case: caseData }: CaseCardProps) {
             </h3>
             <StatusBadge status={caseData.status} size="sm" />
           </div>
-          <p className="text-xs sm:text-sm text-gray-600">{caseData.caseNumber}</p>
+          <p className="text-xs sm:text-sm text-gray-600">{formatCaseNumber(caseData.caseNumber)}</p>
           {caseData.description && (
             <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">{caseData.description}</p>
           )}

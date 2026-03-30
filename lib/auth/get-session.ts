@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from './auth.config';
 import { UnauthorizedError, ForbiddenError } from '@/lib/utils/errors';
-import { UserRole } from '@/types/user.types';
+import { UserRole, UserArea } from '@/types/user.types';
 
 /**
  * Obtiene la sesión del usuario en el servidor
@@ -39,9 +39,9 @@ export async function requireRole(roles: UserRole | UserRole[]) {
 }
 
 /**
- * Verifica si el usuario puede acceder a un caso
+ * Verifica si el usuario puede acceder a un caso (solo lectura)
  */
-export async function canAccessCase(caseCreatorId: string, caseAreaRole?: UserRole) {
+export async function canAccessCase(caseCreatorId: string, caseArea?: UserArea) {
   const session = await requireAuth();
   const user = session.user;
   
@@ -51,8 +51,30 @@ export async function canAccessCase(caseCreatorId: string, caseAreaRole?: UserRo
   // Creador puede ver su caso
   if (user.id === caseCreatorId) return true;
   
-  // Área puede ver si está en su paso
-  if (caseAreaRole && user.role === caseAreaRole) return true;
+  // Usuarios de área pueden ver TODOS los casos
+  if (user.role === 'AREA_USER') return true;
   
   throw new ForbiddenError('No tiene acceso a este caso');
+}
+
+/**
+ * Verifica si el usuario puede interactuar con un caso (subir archivos, aprobar, devolver)
+ */
+export async function canInteractWithCase(caseCreatorId: string, caseArea?: UserArea) {
+  const session = await requireAuth();
+  const user = session.user;
+  
+  // Admin puede interactuar con todo
+  if (user.role === 'ADMIN') return true;
+  
+  // Creador puede interactuar con su caso
+  if (user.id === caseCreatorId) return true;
+  
+  // Usuarios de área solo pueden interactuar si el caso está asignado a su área
+  if (user.role === 'AREA_USER') {
+    if (caseArea && user.area === caseArea) return true;
+    throw new ForbiddenError('Solo puede interactuar con casos asignados a su área');
+  }
+  
+  throw new ForbiddenError('No tiene permisos para interactuar con este caso');
 }

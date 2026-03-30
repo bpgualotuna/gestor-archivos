@@ -11,13 +11,15 @@ const createUserSchema = z.object({
   password: z.string().min(6),
   firstName: z.string().min(2),
   lastName: z.string().min(2),
-  role: z.enum(['USER', 'COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL', 'ADMIN']),
+  role: z.enum(['USER', 'AREA_USER', 'ADMIN']),
+  area: z.enum(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']).optional(),
 });
 
 const updateUserSchema = z.object({
   firstName: z.string().min(2).optional(),
   lastName: z.string().min(2).optional(),
-  role: z.enum(['USER', 'COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL', 'ADMIN']).optional(),
+  role: z.enum(['USER', 'AREA_USER', 'ADMIN']).optional(),
+  area: z.enum(['COMERCIAL', 'TECNICA', 'FINANCIERA', 'LEGAL']).nullable().optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
     await requireRole('ADMIN');
 
     const result = await query(
-      `SELECT id, email, first_name, last_name, role, is_active, created_at, last_login
+      `SELECT id, email, first_name, last_name, role, area, is_active, created_at, last_login
        FROM users
        ORDER BY created_at DESC`
     );
@@ -42,6 +44,7 @@ export async function GET(request: NextRequest) {
       lastName: row.last_name,
       name: `${row.first_name} ${row.last_name}`,
       role: row.role,
+      area: row.area,
       isActive: row.is_active,
       createdAt: row.created_at,
       lastLogin: row.last_login,
@@ -74,20 +77,26 @@ export async function POST(request: NextRequest) {
       return errorResponse(new ValidationError('El email ya está registrado'));
     }
 
+    // Validar que si es AREA_USER, tenga área
+    if (validatedData.role === 'AREA_USER' && !validatedData.area) {
+      return errorResponse(new ValidationError('Los usuarios de área deben tener un área asignada'));
+    }
+
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
     // Crear usuario
     const result = await query(
-      `INSERT INTO users (email, password_hash, first_name, last_name, role)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, email, first_name, last_name, role, is_active, created_at`,
+      `INSERT INTO users (email, password_hash, first_name, last_name, role, area)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, email, first_name, last_name, role, area, is_active, created_at`,
       [
         validatedData.email,
         hashedPassword,
         validatedData.firstName,
         validatedData.lastName,
         validatedData.role,
+        validatedData.area || null,
       ]
     );
 
@@ -98,6 +107,7 @@ export async function POST(request: NextRequest) {
       lastName: result.rows[0].last_name,
       name: `${result.rows[0].first_name} ${result.rows[0].last_name}`,
       role: result.rows[0].role,
+      area: result.rows[0].area,
       isActive: result.rows[0].is_active,
       createdAt: result.rows[0].created_at,
     };
